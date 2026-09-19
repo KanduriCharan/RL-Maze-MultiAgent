@@ -15,6 +15,31 @@ public class EpisodeManager : MonoBehaviour
     private bool isResetting = false;
 
     // Call this once for every W/A/S/D action.
+    public void Start()
+    {
+        mazeGenerator.GenerateMaze();
+        PlacePlayerAndGoal();
+    }
+    private void PlacePlayerAndGoal()
+    {
+        CharacterController controller =
+            player.GetComponent<CharacterController>();
+
+        if (controller != null)
+            controller.enabled = false;
+
+        player.position =
+            mazeGenerator.GetCellWorldPosition(0, 0, 1f);
+
+        if (controller != null)
+            controller.enabled = true;
+
+        goal.position = mazeGenerator.GetCellWorldPosition(
+            mazeGenerator.width - 1,
+            mazeGenerator.height - 1,
+            0.25f
+        );
+    }
     public void RegisterStep()
     {
         if (isResetting)
@@ -54,29 +79,11 @@ public class EpisodeManager : MonoBehaviour
 
         // 2. Use a new random seed.
         mazeGenerator.seed = Random.Range(0, int.MaxValue);
+        mazeGenerator.GenerateMaze();
 
-        // 3. Generate a new maze using the existing MazeGenerator.cs.
-        // GenerateMaze() is private in your current file, so SendMessage is
-        // used here without requiring you to edit MazeGenerator.cs yet.
-        mazeGenerator.SendMessage("GenerateMaze", SendMessageOptions.DontRequireReceiver);
+        PlacePlayerAndGoal();
 
-        // 4. Reset the player to cell (0, 0).
-        CharacterController controller = player.GetComponent<CharacterController>();
-
-        if (controller != null)
-            controller.enabled = false;
-
-        player.position = new Vector3(0f, 1f, 0f);
-
-        if (controller != null)
-            controller.enabled = true;
-
-        // 5. Put the goal in the last maze cell.
-        float goalX = (mazeGenerator.width - 1) * mazeGenerator.cellSize;
-        float goalZ = (mazeGenerator.height - 1) * mazeGenerator.cellSize;
-        goal.position = new Vector3(goalX, 0.25f, goalZ);
-
-        // 6. Reset episode counters.
+        // 3. Reset episode counters.
         stepCount = 0;
         isResetting = false;
 

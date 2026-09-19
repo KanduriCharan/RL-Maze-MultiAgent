@@ -2,23 +2,34 @@ using UnityEngine;
 
 public class GoalDetector : MonoBehaviour
 {
+    [SerializeField]
     private EpisodeManager episodeManager;
-    void Start()
-    {
-        episodeManager = FindAnyObjectByType<EpisodeManager>();
 
+    private void Start()
+    {
         if (episodeManager == null)
         {
-            Debug.LogError("EpisodeManager not found in the scene.");
+            Debug.LogError(
+                "Assign this goal's EpisodeManager in the Inspector.",
+                this
+            );
         }
     }
+
     private void OnTriggerEnter(Collider other)
     {
-        // Temporary test: detect the Player by GameObject/root name.
-        if (other.gameObject.name == "Player" || other.transform.root.name == "Player")
-        {
-            Debug.Log("GOAL REACHED");
+        if (episodeManager == null)
+            return;
 
-        }
+        PlayerController player =
+            other.GetComponentInParent<PlayerController>();
+
+        if (player == null)
+            return;
+
+        if (player.transform != episodeManager.player)
+            return;
+
+        episodeManager.GoalReached();
     }
 }

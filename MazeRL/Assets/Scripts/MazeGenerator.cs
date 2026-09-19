@@ -18,12 +18,7 @@ public class MazeGenerator : MonoBehaviour
 
     private Cell[,] cells;
 
-    void Start()
-    {
-        GenerateMaze();
-    }
-
-    void GenerateMaze()
+    public void GenerateMaze()
     {
         cells = new Cell[width, height];
 
@@ -135,8 +130,8 @@ public class MazeGenerator : MonoBehaviour
     {
         GameObject floor = GameObject.CreatePrimitive(PrimitiveType.Cube);
 
-        floor.transform.parent = transform;
-        floor.transform.position = position + Vector3.down * 0.05f;
+        floor.transform.SetParent(transform, false);
+        floor.transform.localPosition = position + Vector3.down * 0.05f;
         floor.transform.localScale = new Vector3(cellSize, 0.1f, cellSize);
     }
 
@@ -144,8 +139,15 @@ public class MazeGenerator : MonoBehaviour
     {
         GameObject wall = GameObject.CreatePrimitive(PrimitiveType.Cube);
 
-        wall.transform.parent = transform;
-        wall.transform.position = position;
+        wall.transform.SetParent(transform, false);
+        wall.transform.localPosition = position;
         wall.transform.localScale = scale;
+    }
+    public Vector3 GetCellWorldPosition(int x, int z, float heightOffset)
+    {
+        Vector3 localPosition =
+            new Vector3(x * cellSize, heightOffset, z * cellSize);
+
+        return transform.TransformPoint(localPosition);
     }
 }
