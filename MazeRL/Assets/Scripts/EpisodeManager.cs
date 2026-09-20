@@ -21,12 +21,33 @@ public class EpisodeManager : MonoBehaviour
 
     private int stepCount = 0;
     private bool isResetting = false;
+    private bool initialized;
 
     private void Start()
     {
+        if (!initialized)
+            Initialize(arenaId, baseSeed);
+    }
+    public void Initialize(int id, int seed)
+    {
+        if (initialized)
+            return;
+
+        if (mazeGenerator == null || player == null || goal == null)
+        {
+            throw new System.InvalidOperationException(
+                "Arena is missing its maze generator, player, or goal reference."
+            );
+        }
+
+        arenaId = id;
+        baseSeed = seed;
         episodeIndex = 0;
+
         GenerateCurrentEpisode();
         PlacePlayerAndGoal();
+
+        initialized = true;
     }
     private void PlacePlayerAndGoal()
     {
