@@ -754,6 +754,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MazeGenerator
   floorMaterial: {fileID: 2100000, guid: b140487ec23724f47a813585de86bd89, type: 2}
   wallMaterial: {fileID: 2100000, guid: 555d7db1475424ecca917161f9ac7637, type: 2}
+  mazeRoot: {fileID: 1989891484}
   width: 10
   height: 10
   cellSize: 2
@@ -856,6 +857,37 @@ MonoBehaviour:
   player: {fileID: 375857801}
   goal: {fileID: 146416894}
   maxSteps: 500
+--- !u!1 &1989891483
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1989891484}
+  m_Layer: 0
+  m_Name: MazeRoot
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1989891484
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1989891483}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2147296630}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &2147296629
 GameObject:
   m_ObjectHideFlags: 0
@@ -881,10 +913,11 @@ Transform:
   m_GameObject: {fileID: 2147296629}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 30, y: 0, z: 0}
+  m_LocalPosition: {x: 50, y: 0, z: 50}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 1989891484}
   - {fileID: 776858197}
   - {fileID: 375857801}
   - {fileID: 146416894}

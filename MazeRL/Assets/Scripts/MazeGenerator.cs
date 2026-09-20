@@ -6,6 +6,7 @@ public class MazeGenerator : MonoBehaviour
 {
     [SerializeField] private Material floorMaterial;
     [SerializeField] private Material wallMaterial;
+    [SerializeField] private Transform mazeRoot;
     public int width = 10;
     public int height = 10;
     public float cellSize = 2f;
@@ -132,10 +133,10 @@ public class MazeGenerator : MonoBehaviour
     {
         GameObject floor = GameObject.CreatePrimitive(PrimitiveType.Cube);
 
-        floor.transform.SetParent(transform, false);
+        floor.transform.SetParent(mazeRoot, false);
         floor.transform.localPosition = position + Vector3.down * 0.05f;
         floor.transform.localScale = new Vector3(cellSize, 0.1f, cellSize);
-        
+
         floor.GetComponent<Renderer>().material = floorMaterial;
     }
 
@@ -143,7 +144,7 @@ public class MazeGenerator : MonoBehaviour
     {
         GameObject wall = GameObject.CreatePrimitive(PrimitiveType.Cube);
 
-        wall.transform.SetParent(transform, false);
+        wall.transform.SetParent(mazeRoot, false);
         wall.transform.localPosition = position;
         wall.transform.localScale = scale;
 
@@ -154,6 +155,14 @@ public class MazeGenerator : MonoBehaviour
         Vector3 localPosition =
             new Vector3(x * cellSize, heightOffset, z * cellSize);
 
-        return transform.TransformPoint(localPosition);
+        return mazeRoot.TransformPoint(localPosition);
+    }
+    public void ClearMaze()
+    {
+        foreach (Transform child in mazeRoot)
+        {
+            child.gameObject.SetActive(false);
+            Destroy(child.gameObject);
+        }
     }
 }
