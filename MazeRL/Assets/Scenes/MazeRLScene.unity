@@ -340,8 +340,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MultiArenaManager
   arenaPrefab: {fileID: 1378412049632742778, guid: 95d36299629d941b79e670cc6d8e1b25, type: 3}
-  environmentCount: 64
-  columns: 8
+  environmentCount: 1
+  columns: 1
   safetyMargin: 10
   baseSeed: 1000
   controlledArenaId: 0

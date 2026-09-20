@@ -6,26 +6,31 @@ public class MouseLook : MonoBehaviour
     public Transform playerBody;
     public float mouseSensitivity = 0.15f;
 
-    private float xRotation = 0f;
+    private bool externalControl;
+
+    public void SetExternalControl(bool enabled)
+    {
+        externalControl = enabled;
+    }
 
     void Start()
     {
+        ResetLook();
+        if (externalControl)
+            return;
+
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
     }
 
     void Update()
     {
-        if (Mouse.current == null)
+        if (externalControl || Mouse.current == null)
             return;
 
         Vector2 mouseDelta = Mouse.current.delta.ReadValue() * mouseSensitivity;
 
-        xRotation -= mouseDelta.y;
-        xRotation = Mathf.Clamp(xRotation, -85f, 85f);
-
-        transform.localRotation = Quaternion.Euler(xRotation, 0f, 0f);
-        playerBody.Rotate(Vector3.up * mouseDelta.x);
+        ApplyLook(mouseDelta.x);
 
         if (Keyboard.current != null &&
             Keyboard.current.escapeKey.wasPressedThisFrame)
@@ -34,9 +39,15 @@ public class MouseLook : MonoBehaviour
             Cursor.visible = true;
         }
     }
+    // Keep the camera level at its existing head-height offset; turn only the body.
+    public void ApplyLook(float yawDegrees)
+    {
+        transform.localRotation = Quaternion.identity;
+        playerBody.Rotate(Vector3.up * yawDegrees);
+    }
+
     public void ResetLook()
     {
-        xRotation = 0f;
         transform.localRotation = Quaternion.identity;
     }
 }

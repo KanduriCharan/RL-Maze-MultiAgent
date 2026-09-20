@@ -9,6 +9,13 @@ public class PlayerController : MonoBehaviour
 
     private CharacterController controller;
     private float verticalVelocity;
+    private bool externalControl;
+
+    public void SetExternalControl(bool enabled)
+    {
+        externalControl = enabled;
+        ResetMotion();
+    }
 
     void Awake()
     {
@@ -17,7 +24,7 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
-        if (Keyboard.current == null)
+        if (externalControl || Keyboard.current == null)
             return;
 
         Vector2 input = Vector2.zero;
@@ -27,6 +34,30 @@ public class PlayerController : MonoBehaviour
         if (Keyboard.current.dKey.isPressed) input.x += 1f;
         if (Keyboard.current.aKey.isPressed) input.x -= 1f;
 
+        Move(input, Time.deltaTime);
+    }
+
+    // Discrete movement: 0=W, 1=A (strafe left), 2=S, 3=D (strafe right).
+    public void ApplyAgentAction(int action, float deltaTime)
+    {
+        if (!externalControl)
+            return;
+
+        Vector2 input;
+        switch (action)
+        {
+            case 0: input = Vector2.up; break;
+            case 1: input = Vector2.left; break;
+            case 2: input = Vector2.down; break;
+            case 3: input = Vector2.right; break;
+            default: throw new System.ArgumentOutOfRangeException(nameof(action));
+        }
+
+        Move(input, deltaTime);
+    }
+
+    private void Move(Vector2 input, float deltaTime)
+    {
         Vector3 move =
             transform.right * input.x +
             transform.forward * input.y;
@@ -37,10 +68,11 @@ public class PlayerController : MonoBehaviour
         if (controller.isGrounded && verticalVelocity < 0f)
             verticalVelocity = -2f;
 
-        verticalVelocity += gravity * Time.deltaTime;
+        move *= moveSpeed;
+        verticalVelocity += gravity * deltaTime;
         move.y = verticalVelocity;
 
-        controller.Move(move * moveSpeed * Time.deltaTime);
+        controller.Move(move * deltaTime);
     }
     public void ResetMotion()
     {
