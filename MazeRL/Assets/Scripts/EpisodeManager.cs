@@ -31,6 +31,10 @@ public class EpisodeManager : MonoBehaviour
         player.position =
             mazeGenerator.GetCellWorldPosition(0, 0, 1f);
 
+        player.rotation = mazeGenerator.transform.rotation;
+        player.GetComponent<PlayerController>().ResetMotion();
+        player.GetComponentInChildren<MouseLook>().ResetLook();
+
         if (controller != null)
             controller.enabled = true;
 

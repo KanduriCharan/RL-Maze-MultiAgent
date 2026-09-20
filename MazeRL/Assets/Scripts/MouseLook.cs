@@ -34,4 +34,9 @@ public class MouseLook : MonoBehaviour
             Cursor.visible = true;
         }
     }
+    public void ResetLook()
+    {
+        xRotation = 0f;
+        transform.localRotation = Quaternion.identity;
+    }
 }

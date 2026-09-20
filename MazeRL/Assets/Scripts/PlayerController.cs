@@ -42,4 +42,9 @@ public class PlayerController : MonoBehaviour
 
         controller.Move(move * moveSpeed * Time.deltaTime);
     }
+    public void ResetMotion()
+    {
+        verticalVelocity = 0f;
+    }
+    
 }
