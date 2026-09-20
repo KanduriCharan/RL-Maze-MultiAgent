@@ -71,3 +71,4 @@ results/
 # Logs
 # =========================
 *.log
+/MazeRL/Assets/ML-Agents
