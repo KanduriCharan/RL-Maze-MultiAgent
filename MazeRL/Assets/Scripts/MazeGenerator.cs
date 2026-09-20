@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class MazeGenerator : MonoBehaviour
 {
+    [SerializeField] private Material floorMaterial;
+    [SerializeField] private Material wallMaterial;
     public int width = 10;
     public int height = 10;
     public float cellSize = 2f;
@@ -133,6 +135,8 @@ public class MazeGenerator : MonoBehaviour
         floor.transform.SetParent(transform, false);
         floor.transform.localPosition = position + Vector3.down * 0.05f;
         floor.transform.localScale = new Vector3(cellSize, 0.1f, cellSize);
+        
+        floor.GetComponent<Renderer>().material = floorMaterial;
     }
 
     void CreateWall(Vector3 position, Vector3 scale)
@@ -142,6 +146,8 @@ public class MazeGenerator : MonoBehaviour
         wall.transform.SetParent(transform, false);
         wall.transform.localPosition = position;
         wall.transform.localScale = scale;
+
+        wall.GetComponent<Renderer>().material = wallMaterial;
     }
     public Vector3 GetCellWorldPosition(int x, int z, float heightOffset)
     {

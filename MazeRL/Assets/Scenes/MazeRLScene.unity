@@ -752,6 +752,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 02985fcd722af4892b2e89dafb53ff0b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MazeGenerator
+  floorMaterial: {fileID: 2100000, guid: b140487ec23724f47a813585de86bd89, type: 2}
+  wallMaterial: {fileID: 2100000, guid: 555d7db1475424ecca917161f9ac7637, type: 2}
   width: 10
   height: 10
   cellSize: 2
