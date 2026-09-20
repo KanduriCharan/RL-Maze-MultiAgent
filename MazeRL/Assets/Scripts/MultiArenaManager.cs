@@ -1,4 +1,6 @@
 using UnityEngine;
+using Unity.MLAgents;
+using Unity.MLAgents.Sensors;
 
 public class MultiArenaManager : MonoBehaviour
 {
@@ -68,20 +70,33 @@ public class MultiArenaManager : MonoBehaviour
 
             bool manualControl = id == controlledArenaId;
 
-            SetManualControl(episode, manualControl);
+            ConfigureControl(episode, manualControl);
             episode.Initialize(id, baseSeed);
         }
     }
 
-    private void SetManualControl(
+    private void ConfigureControl(
         EpisodeManager episode,
         bool enabled)
     {
         Transform player = episode.player;
 
-        player.GetComponent<PlayerController>().enabled = enabled;
-        player.GetComponentInChildren<MouseLook>(true).enabled = enabled;
+        bool pythonControl = Academy.Instance.IsCommunicatorOn;
+        player.GetComponent<PlayerController>().enabled = pythonControl || enabled;
+        player.GetComponentInChildren<MouseLook>(true).enabled = pythonControl || enabled;
+
+        // Sensors still capture observations when automatic screen rendering is disabled.
+        CameraSensorComponent sensor = player.GetComponent<CameraSensorComponent>();
+        if (sensor != null)
+            sensor.RuntimeCameraEnable = enabled;
         player.GetComponentInChildren<Camera>(true).enabled = enabled;
+
+        // Keep this validation run on a fixed layout; episode integration comes later.
+        if (pythonControl)
+        {
+            foreach (GoalDetector detector in episode.goal.GetComponentsInChildren<GoalDetector>(true))
+                detector.enabled = false;
+        }
         player.GetComponentInChildren<AudioListener>(true).enabled = enabled;
     }
 }

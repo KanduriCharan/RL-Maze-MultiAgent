@@ -1,4 +1,4 @@
-"""Single-agent Editor smoke test; Python owns all random action selection."""
+"""Multi-agent Editor smoke test; Python owns all random action selection."""
 import argparse
 from datetime import datetime
 from pathlib import Path
@@ -44,6 +44,16 @@ def save_frame(frame, path):
     print(f"Saved {path}", flush=True)
 
 
+def random_actions(agent_ids, rng):
+    """Rows must follow DecisionSteps.agent_id order, not sorted IDs."""
+    discrete = np.empty((len(agent_ids), 2), dtype=np.int32)
+    discrete[:, 0] = rng.integers(4, size=len(agent_ids))
+    discrete[:, 1] = rng.integers(3, size=len(agent_ids))
+    labels = {int(agent_id): (('W', 'A', 'S', 'D')[int(row[0])], int(row[1]))
+              for agent_id, row in zip(agent_ids, discrete)}
+    return ActionTuple(discrete=discrete), labels
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--steps', type=int, default=20)
@@ -59,7 +69,7 @@ def main():
     channel.set_configuration_parameters(time_scale=1.0)
     env = None
     try:
-        print('Waiting on port 5004. Now press Play in Unity (one arena).', flush=True)
+        print('Waiting on port 5004. Now press Play in Unity (configured arenas).', flush=True)
         env = UnityEnvironment(file_name=None, seed=args.seed, base_port=5004,
                                timeout_wait=60, no_graphics=False, side_channels=[channel])
         env.reset()
@@ -73,32 +83,37 @@ def main():
             raise ValueError(f'Expected discrete [4, 3]; got {spec.action_spec}')
         camera = visual_index(spec)
         decisions, terminals = env.get_steps(behavior)
-        if len(decisions) != 1 or len(terminals):
-            raise ValueError('Expected exactly one active agent at reset.')
-        agent_id = int(decisions.agent_id[0])
-        previous = decisions[agent_id].obs[camera].copy()
-        save_frame(previous, output / 'step_000_initial.png')
+        if not len(decisions) or len(terminals):
+            raise ValueError('Expected active agents and no terminal steps at reset.')
+        expected_ids = set(map(int, decisions.agent_id))
+        print(f'Connected agents: {sorted(expected_ids)}', flush=True)
+        for agent_id in expected_ids:
+            folder = output / f'agent_{agent_id}'
+            folder.mkdir()
+            save_frame(decisions[agent_id].obs[camera], folder / 'step_000_initial.png')
         for step in range(1, args.steps + 1):
-            movement = int(rng.integers(4))
-            yaw = int(rng.integers(3))
-            label = ('W', 'A', 'S', 'D')[movement]
-            print(f'Step {step:03d} -> {label}, yaw={yaw}', flush=True)
-            env.set_actions(behavior, ActionTuple(discrete=np.array([[movement, yaw]], dtype=np.int32)))
+            actions, labels = random_actions(decisions.agent_id, rng)
+            previous = {int(i): decisions[int(i)].obs[camera].copy()
+                        for i in decisions.agent_id}
+            for agent_id, (label, yaw) in labels.items():
+                print(f'Step {step:03d} agent {agent_id} -> {label}, yaw={yaw}', flush=True)
+            env.set_actions(behavior, actions)
             env.step()
             decisions, terminals = env.get_steps(behavior)
+            # All arenas use the same decision period. Match by ID, never returned row order.
+            returned_ids = set(map(int, decisions.agent_id)) | set(map(int, terminals.agent_id))
+            if returned_ids != expected_ids:
+                raise ValueError('Agent set changed. This test expects fixed, synchronized arenas.')
+            for agent_id, (label, yaw) in labels.items():
+                result = terminals if agent_id in terminals else decisions
+                frame = result[agent_id].obs[camera]
+                suffix = '_terminal' if agent_id in terminals else ''
+                save_frame(frame, output / f'agent_{agent_id}' /
+                           f'step_{step:03d}_{label}_yaw{yaw}{suffix}.png')
+                print(f'Agent {agent_id} mean image change: '
+                      f'{np.abs(frame - previous[agent_id]).mean():.6f}', flush=True)
             if len(terminals):
-                if len(terminals) != 1 or agent_id not in terminals:
-                    raise ValueError('Unexpected terminal agent identity.')
-                frame = terminals[agent_id].obs[camera]
-            else:
-                if len(decisions) != 1 or agent_id not in decisions:
-                    raise ValueError('Expected the same single agent after each step.')
-                frame = decisions[agent_id].obs[camera]
-            save_frame(frame, output / f'step_{step:03d}_{label}_yaw{yaw}.png')
-            print(f'Mean image change: {np.abs(frame - previous).mean():.6f}', flush=True)
-            previous = frame.copy()
-            if len(terminals):
-                print('Agent terminated; stopping after saving its final observation.', flush=True)
+                print('Terminal observations saved; stopping. Episode reset integration is not enabled.', flush=True)
                 break
     finally:
         if env is not None:
