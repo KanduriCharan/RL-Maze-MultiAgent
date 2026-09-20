@@ -58,3 +58,19 @@ env/
 # Logs
 # =========================
 *.log
+# Python environments
+venv/
+.venv/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Conda / installer artifacts
+Miniforge3.sh
+
+# ML-Agents generated training results
+results/
+
+# ML-Agents timing / profiler artifacts
+*_timers.json
