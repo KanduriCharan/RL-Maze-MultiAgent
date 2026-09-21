@@ -1,4 +1,3 @@
-using System.Collections;
 using UnityEngine;
 
 public class EpisodeManager : MonoBehaviour
@@ -9,7 +8,9 @@ public class EpisodeManager : MonoBehaviour
     public Transform goal;
 
     [Header("Episode Settings")]
-    public int maxSteps = 500;
+    [SerializeField, Min(0.02f)] private float timeLimitSeconds = 60f;
+    [SerializeField] private float elapsedSeconds;
+    [SerializeField] private string lastOutcome = "None";
 
     [Header("Arena Seed Settings")]
     [SerializeField, Min(0)] private int arenaId = 0;
@@ -19,9 +20,10 @@ public class EpisodeManager : MonoBehaviour
     [SerializeField] private int episodeIndex = 0;
     [SerializeField] private int currentSeed;
 
-    private int stepCount = 0;
+    private MazeAgent agent;
     private bool isResetting = false;
     private bool initialized;
+    private bool advanceEpisodeOnBegin;
 
     private void Start()
     {
@@ -40,6 +42,10 @@ public class EpisodeManager : MonoBehaviour
             );
         }
 
+        agent = player.GetComponent<MazeAgent>();
+        if (agent != null)
+            agent.BindEpisodeManager(this);
+
         arenaId = id;
         baseSeed = seed;
         episodeIndex = 0;
@@ -47,6 +53,7 @@ public class EpisodeManager : MonoBehaviour
         GenerateCurrentEpisode();
         PlacePlayerAndGoal();
 
+        elapsedSeconds = 0f;
         initialized = true;
     }
     private void PlacePlayerAndGoal()
@@ -73,51 +80,71 @@ public class EpisodeManager : MonoBehaviour
             0.25f
         );
     }
-    public void RegisterStep()
+    private void FixedUpdate()
     {
-        if (isResetting)
+        if (!initialized || isResetting)
             return;
 
-        stepCount++;
+        elapsedSeconds += Time.fixedDeltaTime;
+        if (elapsedSeconds + 0.00001f >= timeLimitSeconds)
+            FinishEpisode(true);
+    }
 
-        if (stepCount >= maxSteps)
+    public void GoalReached()
+    {
+        FinishEpisode(false);
+    }
+
+    private void FinishEpisode(bool timedOut)
+    {
+        if (!initialized || isResetting)
+            return;
+
+        isResetting = true;
+        advanceEpisodeOnBegin = true;
+        lastOutcome = timedOut ? "Timeout" : "Success";
+        Debug.Log($"[Arena {arenaId}] Episode {episodeIndex}: {lastOutcome} " +
+            $"after {elapsedSeconds:F2} simulated seconds.", this);
+
+        // ML-Agents captures terminal observations before invoking OnEpisodeBegin.
+        if (agent != null && agent.isActiveAndEnabled)
         {
-            Debug.Log($"[Arena {arenaId}] Goal reached in episode {episodeIndex}. Resetting.",this);
-            StartCoroutine(ResetEpisode());
+            if (timedOut)
+                agent.EpisodeInterrupted();
+            else
+                agent.EndEpisode();
+        }
+        else
+        {
+            BeginEpisode();
         }
     }
 
-    // Call this when the player reaches the goal.
-    public void GoalReached()
+    public void BeginEpisode()
     {
-        if (isResetting)
+        if (!initialized)
             return;
 
-        Debug.Log($"[Arena {arenaId}] Goal reached in episode {episodeIndex}. Resetting.",this);
-        StartCoroutine(ResetEpisode());
-    }
-
-    private IEnumerator ResetEpisode()
-    {
         isResetting = true;
-
-        // 1. Remove the old maze objects.
-        mazeGenerator.ClearMaze();
-
-        // Destroy() happens at the end of the frame.
-        yield return null;
-
-        episodeIndex++;
-        GenerateCurrentEpisode();
-
+        // Startup and Python env.reset() also invoke OnEpisodeBegin. Only a
+        // completed goal/timeout should advance the deterministic maze sequence.
+        if (advanceEpisodeOnBegin)
+        {
+            advanceEpisodeOnBegin = false;
+            // ClearMaze disables old geometry immediately; deferred destruction is safe.
+            mazeGenerator.ClearMaze();
+            episodeIndex++;
+            GenerateCurrentEpisode();
+        }
+        else
+        {
+            lastOutcome = "None";
+        }
         PlacePlayerAndGoal();
-
-        // 3. Reset episode counters.
-        stepCount = 0;
+        elapsedSeconds = 0f;
         isResetting = false;
-
-        Debug.Log("NEW EPISODE STARTED");
     }
+
     private int CalculateEpisodeSeed()
     {
         unchecked

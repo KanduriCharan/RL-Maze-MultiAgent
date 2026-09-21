@@ -533,7 +533,9 @@ MonoBehaviour:
   mazeGenerator: {fileID: 914619237063723291}
   player: {fileID: 5058668507187215672}
   goal: {fileID: 2858311307880169517}
-  maxSteps: 500
+  timeLimitSeconds: 60
+  elapsedSeconds: 0
+  lastOutcome: None
   arenaId: 0
   baseSeed: 1000
   episodeIndex: 0

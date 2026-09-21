@@ -85,36 +85,39 @@ def main():
         decisions, terminals = env.get_steps(behavior)
         if not len(decisions) or len(terminals):
             raise ValueError('Expected active agents and no terminal steps at reset.')
-        expected_ids = set(map(int, decisions.agent_id))
-        print(f'Connected agents: {sorted(expected_ids)}', flush=True)
-        for agent_id in expected_ids:
-            folder = output / f'agent_{agent_id}'
-            folder.mkdir()
-            save_frame(decisions[agent_id].obs[camera], folder / 'step_000_initial.png')
+        print(f'Initial agent IDs: {list(decisions.agent_id)}', flush=True)
+        pending = {}
+        sample_counts = {}
+
+        def record_steps(current, terminal=False):
+            for raw_id in current.agent_id:
+                agent_id = int(raw_id)
+                sample = current[agent_id]
+                folder = output / f'agent_{agent_id}'
+                folder.mkdir(exist_ok=True)
+                number = sample_counts.get(agent_id, 0)
+                action = pending.pop(agent_id, None)
+                label = 'initial' if action is None else f'{action[0]}_yaw{action[1]}'
+                outcome = ''
+                if terminal:
+                    outcome = '_timeout' if sample.interrupted else '_success'
+                    print(f'Agent {agent_id}: {outcome[1:]}', flush=True)
+                save_frame(sample.obs[camera], folder / f'sample_{number:04d}_{label}{outcome}.png')
+                sample_counts[agent_id] = number + 1
+
+        record_steps(decisions)
         for step in range(1, args.steps + 1):
-            actions, labels = random_actions(decisions.agent_id, rng)
-            previous = {int(i): decisions[int(i)].obs[camera].copy()
-                        for i in decisions.agent_id}
-            for agent_id, (label, yaw) in labels.items():
-                print(f'Step {step:03d} agent {agent_id} -> {label}, yaw={yaw}', flush=True)
-            env.set_actions(behavior, actions)
+            if len(decisions):
+                actions, labels = random_actions(decisions.agent_id, rng)
+                pending.update(labels)
+                for agent_id, (label, yaw) in labels.items():
+                    print(f'Batch {step:03d} agent {agent_id} -> {label}, yaw={yaw}', flush=True)
+                env.set_actions(behavior, actions)
             env.step()
             decisions, terminals = env.get_steps(behavior)
-            # All arenas use the same decision period. Match by ID, never returned row order.
-            returned_ids = set(map(int, decisions.agent_id)) | set(map(int, terminals.agent_id))
-            if returned_ids != expected_ids:
-                raise ValueError('Agent set changed. This test expects fixed, synchronized arenas.')
-            for agent_id, (label, yaw) in labels.items():
-                result = terminals if agent_id in terminals else decisions
-                frame = result[agent_id].obs[camera]
-                suffix = '_terminal' if agent_id in terminals else ''
-                save_frame(frame, output / f'agent_{agent_id}' /
-                           f'step_{step:03d}_{label}_yaw{yaw}{suffix}.png')
-                print(f'Agent {agent_id} mean image change: '
-                      f'{np.abs(frame - previous[agent_id]).mean():.6f}', flush=True)
-            if len(terminals):
-                print('Terminal observations saved; stopping. Episode reset integration is not enabled.', flush=True)
-                break
+            # Terminal IDs and new episode IDs can arrive together or on different exchanges.
+            record_steps(terminals, terminal=True)
+            record_steps(decisions)
     finally:
         if env is not None:
             env.close()

@@ -11,6 +11,21 @@ public class MazeAgent : Agent
     private PlayerController movement;
     private MouseLook look;
     private bool pythonControl;
+    private EpisodeManager episodeManager;
+
+    public void BindEpisodeManager(EpisodeManager owner)
+    {
+        if (owner.player != transform)
+            throw new InvalidOperationException("EpisodeManager must own this player.");
+        episodeManager = owner;
+    }
+
+    public override void OnEpisodeBegin()
+    {
+        // Initial Agent activation can happen before the arena manager initializes us.
+        if (episodeManager != null)
+            episodeManager.BeginEpisode();
+    }
 
     public override void Initialize()
     {

@@ -91,12 +91,8 @@ public class MultiArenaManager : MonoBehaviour
             sensor.RuntimeCameraEnable = enabled;
         player.GetComponentInChildren<Camera>(true).enabled = enabled;
 
-        // Keep this validation run on a fixed layout; episode integration comes later.
-        if (pythonControl)
-        {
-            foreach (GoalDetector detector in episode.goal.GetComponentsInChildren<GoalDetector>(true))
-                detector.enabled = false;
-        }
+        foreach (GoalDetector detector in episode.goal.GetComponentsInChildren<GoalDetector>(true))
+            detector.enabled = true;
         player.GetComponentInChildren<AudioListener>(true).enabled = enabled;
     }
 }
