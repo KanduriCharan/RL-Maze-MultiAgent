@@ -20,6 +20,10 @@ public class EpisodeManager : MonoBehaviour
     [SerializeField] private int episodeIndex = 0;
     [SerializeField] private int currentSeed;
 
+    [Header("Wall Appearance")]
+    [SerializeField] private Material[] wallMaterials;
+    private int previousWallMaterialIndex = -1;
+
     private MazeAgent agent;
     private bool isResetting = false;
     private bool initialized;
@@ -49,6 +53,7 @@ public class EpisodeManager : MonoBehaviour
         arenaId = id;
         baseSeed = seed;
         episodeIndex = 0;
+        previousWallMaterialIndex = -1;
 
         GenerateCurrentEpisode();
         PlacePlayerAndGoal();
@@ -159,15 +164,53 @@ public class EpisodeManager : MonoBehaviour
         }
     }
 
+    private Material SelectWallMaterial()
+    {
+        if (wallMaterials == null || wallMaterials.Length == 0)
+            throw new System.InvalidOperationException("Assign wall materials on the EpisodeManager.");
+
+        for (int i = 0; i < wallMaterials.Length; i++)
+        {
+            if (wallMaterials[i] == null)
+                throw new System.InvalidOperationException($"Wall material at index {i} is missing.");
+        }
+
+        // Separate RNG: visual choices must not affect maze carving.
+        int visualSeed = currentSeed ^ 0x5F3759DF;
+        System.Random visualRandom = new System.Random(visualSeed);
+        int count = wallMaterials.Length;
+        int selectedIndex;
+
+        if (count == 1)
+        {
+            selectedIndex = 0;
+        }
+        else if (previousWallMaterialIndex >= 0 && previousWallMaterialIndex < count)
+        {
+            selectedIndex = visualRandom.Next(count - 1);
+            if (selectedIndex >= previousWallMaterialIndex)
+                selectedIndex++;
+        }
+        else
+        {
+            selectedIndex = visualRandom.Next(count);
+        }
+
+        previousWallMaterialIndex = selectedIndex;
+        return wallMaterials[selectedIndex];
+    }
+
     private void GenerateCurrentEpisode()
     {
         currentSeed = CalculateEpisodeSeed();
+        Material selectedMaterial = SelectWallMaterial();
+        mazeGenerator.SetWallMaterial(selectedMaterial);
         mazeGenerator.seed = currentSeed;
         mazeGenerator.GenerateMaze();
 
         Debug.Log(
             $"[Arena {arenaId}] Generated episode {episodeIndex} " +
-            $"with seed {currentSeed}.",
+            $"with seed {currentSeed}, walls: {selectedMaterial.name}.",
             this
         );
     }

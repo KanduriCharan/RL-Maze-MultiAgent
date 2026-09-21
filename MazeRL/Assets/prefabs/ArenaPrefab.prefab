@@ -540,6 +540,11 @@ MonoBehaviour:
   baseSeed: 1000
   episodeIndex: 0
   currentSeed: 0
+  wallMaterials:
+  - {fileID: 2100000, guid: 555d7db1475424ecca917161f9ac7637, type: 2}
+  - {fileID: 2100000, guid: f23a1f9211a414c1b87e0994e536aaed, type: 2}
+  - {fileID: 2100000, guid: cfd21ad2062634cb19df29ba7b50c913, type: 2}
+  - {fileID: 2100000, guid: 43594973ab86348d397801b8b7627015, type: 2}
 --- !u!1 &7297528161986483283
 GameObject:
   m_ObjectHideFlags: 0

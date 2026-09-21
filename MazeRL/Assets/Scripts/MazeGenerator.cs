@@ -21,6 +21,14 @@ public class MazeGenerator : MonoBehaviour
 
     private Cell[,] cells;
 
+    public void SetWallMaterial(Material material)
+    {
+        if (material == null)
+            throw new System.ArgumentNullException(nameof(material));
+
+        wallMaterial = material;
+    }
+
     public void GenerateMaze()
     {
         cells = new Cell[width, height];
@@ -148,7 +156,7 @@ public class MazeGenerator : MonoBehaviour
         wall.transform.localPosition = position;
         wall.transform.localScale = scale;
 
-        wall.GetComponent<Renderer>().material = wallMaterial;
+        wall.GetComponent<Renderer>().sharedMaterial = wallMaterial;
     }
     public Vector3 GetCellWorldPosition(int x, int z, float heightOffset)
     {
