@@ -464,8 +464,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Unity.ML-Agents::Unity.MLAgents.Sensors.CameraSensorComponent
   m_Camera: {fileID: 369838894671158776}
   m_SensorName: PlayerPOV
-  m_Width: 128
-  m_Height: 128
+  m_Width: 84
+  m_Height: 84
   m_Grayscale: 0
   m_ObservationType: 0
   m_RuntimeCameraEnable: 1
@@ -483,7 +483,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a5c9d521e5ef4759a8246a07d52221e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.ML-Agents::Unity.MLAgents.DecisionRequester
-  DecisionPeriod: 10
+  DecisionPeriod: 20
   DecisionStep: 0
   TakeActionsBetweenDecisions: 1
 --- !u!1 &4575017266267447266
@@ -612,7 +612,7 @@ Camera:
     width: 1
     height: 1
   near clip plane: 0.3
-  far clip plane: 1000
+  far clip plane: 20
   field of view: 70
   orthographic: 0
   orthographic size: 5

@@ -20,6 +20,7 @@ public class MazeGenerator : MonoBehaviour
     }
 
     private Cell[,] cells;
+    private Material arenaFloorMaterial;
 
     public void SetWallMaterial(Material material)
     {
@@ -94,13 +95,13 @@ public class MazeGenerator : MonoBehaviour
 
     void BuildMaze()
     {
+        CreateFloor();
+
         for (int x = 0; x < width; x++)
         {
             for (int z = 0; z < height; z++)
             {
                 Vector3 center = new Vector3(x * cellSize, 0, z * cellSize);
-
-                CreateFloor(center);
 
                 if (cells[x, z].walls[0])
                 {
@@ -137,15 +138,33 @@ public class MazeGenerator : MonoBehaviour
         }
     }
 
-    void CreateFloor(Vector3 position)
+    void CreateFloor()
     {
         GameObject floor = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        floor.name = "Floor";
 
         floor.transform.SetParent(mazeRoot, false);
-        floor.transform.localPosition = position + Vector3.down * 0.05f;
-        floor.transform.localScale = new Vector3(cellSize, 0.1f, cellSize);
+        // Cell centers start at zero; keep the original outer edges and top at y = 0.
+        floor.transform.localPosition = new Vector3(
+            (width - 1) * cellSize / 2f, -0.05f, (height - 1) * cellSize / 2f);
+        floor.transform.localScale = new Vector3(width * cellSize, 0.1f, height * cellSize);
 
-        floor.GetComponent<Renderer>().material = floorMaterial;
+        if (floorMaterial != null)
+        {
+            // Reuse one material per arena, preserving texture density without editing the asset.
+            if (arenaFloorMaterial == null)
+                arenaFloorMaterial = new Material(floorMaterial);
+
+            arenaFloorMaterial.mainTextureScale = Vector2.Scale(
+                floorMaterial.mainTextureScale, new Vector2(width, height));
+            floor.GetComponent<Renderer>().sharedMaterial = arenaFloorMaterial;
+        }
+    }
+
+    private void OnDestroy()
+    {
+        if (arenaFloorMaterial != null)
+            Destroy(arenaFloorMaterial);
     }
 
     void CreateWall(Vector3 position, Vector3 scale)
